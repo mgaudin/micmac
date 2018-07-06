@@ -1,4 +1,5 @@
 #include "cdensitymapPH.h"
+#include <numeric>
 
 // create a map of the entire area with very low resolution that depict the density of tie point (point homologue PH)
 // or also Multiplicity of tie point map or Residual map
@@ -596,12 +597,27 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
 				aFile << count_Cnf << " " << i << " " << Pt.x << " " << Pt.y << " " << Pt.z;
 				
 				if (mWithRadiometry) {
-					// get the RGB information from UV coordinates
-					Pt2di image_coords(aCnf->Pt(i, aCnf->VIdIm().at(0)));
-					cISR_Color image_colors = mIms[aCnf->VIdIm().at(0)]->get(image_coords);
+					// initialize average color vectors
+					vector<int> averageRed, averageGreen, averageBlue;
+
+					// iterate on the images where the point can be seen
+					for (int i = 0; i < multiplicity; i++) {
+						// get the RGB information from UV coordinates
+						Pt2di image_coords(aCnf->Pt(i, aCnf->VIdIm().at(i)));
+						cISR_Color image_colors = mIms[aCnf->VIdIm().at(i)]->get(image_coords);
+
+						averageRed.push_back((int)image_colors.r());
+						averageGreen.push_back((int)image_colors.g());
+						averageBlue.push_back((int)image_colors.b());
+					}
+
+					// compute the average value for each channel
+					int aRed = std::accumulate(averageRed.begin(), averageRed.end(), 0) / averageRed.size();
+					int aGreen = std::accumulate(std::begin(averageGreen), std::end(averageGreen), 0) / averageGreen.size();
+					int aBlue = std::accumulate(std::begin(averageBlue), std::end(averageBlue), 0) / averageBlue.size();
 
 					// Write the colorimetric information for point Pt in the output file
-					aFile << " " << (int)image_colors.r() << " " << (int)image_colors.g() << " " << (int)image_colors.b();
+					aFile << " " << aRed << " " << aGreen << " " << aBlue;
 				}
 
 				// Write the features for the point Pt in the output file
