@@ -152,71 +152,114 @@ void cDensityMapPH::determineGSD(){
 }
 
 void cDensityMapPH::populateDensityMap() {
-    // Header
-    string header = "x y z density multiplicity reprojection_error // missing RGB and angles";
-    std::cout << header << "\n";
 
-    // PAUSE
-    //system("PAUSE");
+	// loop on every config of TPM of the set of TPM
+	int progBar = ElMax(int(mTPM->VPMul().size() / 10), 1);
+	int cnt(0);
+	for (auto & aCnf : mTPM->VPMul())
+	{
+		// retrieve 3D position in model geometry
+		if (!mResid) {
+			std::vector<Pt3dr> aPts = aCnf->IntersectBundle(mCams);
+			// add the points to the density map
+			for (auto & Pt : aPts) {
+				Pt2dr PosXY(Pt.x, Pt.y);
+				Pt2di PosUV = XY2UV(PosXY);
+				double aVal = mDM.GetR(PosUV);
+				if (!mMultiplicity) { mDM.SetR(PosUV, aVal + 1); }
+				else { mDM.SetR(PosUV, ElMax((int)aVal, aCnf->NbIm())); }
+			}
+		}
+		if (mResid) {
+			std::vector<double> aResid;
+			std::vector<Pt3dr> aPts = aCnf->IntersectBundle(mCams, aResid);
+			// add the points to the density map
+			int i(0);
+			for (auto & Pt : aPts) {
+				Pt2dr PosXY(Pt.x, Pt.y);
+				Pt2di PosUV = XY2UV(PosXY);
+				double aVal = mDM.GetR(PosUV);
+				if (aResid.at(i)<mThreshResid) mDM.SetR(PosUV, ElMax(aVal, aResid.at(i)));
+				if (mDebug) std::cout << "Reprojection error for this point is equal to " << aResid.at(i) << "\n";
+				i++;
+			}
+		}
 
-    // Loop on every config of TPM of the set of TPM
-    for (auto & aCnf : mTPM->VPMul()) {
+		cnt++;
+		if (cnt>progBar) {
+			std::cout << "-";
+			cnt = 0;
+		}
+	}
+	std::cout << "\n";
+}
 
-        // Initialize residual vector
-        std::vector<double> aResid;
-        // Retrieve 3D position in model geometry with residual
-        std::vector<Pt3dr> aPts = aCnf->IntersectBundle(mCams, aResid);
+void cDensityMapPH::populateDensityMap4Tests() {
+	// Header
+	string header = "x y z density multiplicity reprojection_error max_angle// missing RGB";
+	std::cout << header << "\n";
 
-        // Id of the point
-        int i(0);
+	// PAUSE
+	//system("PAUSE");
 
-        // Add the points to the density map
-        for (auto & Pt : aPts) {
-            Pt2dr PosXY(Pt.x, Pt.y);
-            Pt2di PosUV = XY2UV(PosXY);
+	// Loop on every config of TPM of the set of TPM
+	for (auto & aCnf : mTPM->VPMul()) {
 
-            double aVal = mDM.GetR(PosUV);
+		// Initialize residual vector
+		std::vector<double> aResid;
+		// Retrieve 3D position in model geometry with residual
+		std::vector<Pt3dr> aPts = aCnf->IntersectBundle(mCams, aResid);
 
-            // Set the value of density in the density map
-            mDM.SetR(PosUV, aVal + 1);
-        }
+		// Id of the point
+		int i(0);
 
-        // Try to do things
-        for (auto & Pt : aPts) {
-            Pt2dr PosXY(Pt.x, Pt.y);
-            Pt2di PosUV = XY2UV(PosXY);
+		// Add the points to the density map
+		for (auto & Pt : aPts) {
+			Pt2dr PosXY(Pt.x, Pt.y);
+			Pt2di PosUV = XY2UV(PosXY);
 
-            // DEBUG
-            //std::cout << "Camera: " << mCams << "\n";
-            //std::cout << "Coordinates Pt3dr: " << "x = " << Pt.x << "; y = " << Pt.y << "; z = " << Pt.z << "\n";
-            //std::cout << "Coordinates Pt2dr: " << "Pt.x = " << Pt.x << "; Pt.y = " << Pt.y << "\n";
-            //std::cout << "Coordinates Pt2di: " << XY2UV(PosXY) << "\n";
+			double aVal = mDM.GetR(PosUV);
 
-            // Density from density map
-            double density = mDM.GetR(PosUV);
+			// Set the value of density in the density map
+			mDM.SetR(PosUV, aVal + 1);
+		}
 
-            // Multiplicity ?
-            int multiplicity = aCnf->NbIm();
+		// Try to do things
+		for (auto & Pt : aPts) {
+			Pt2dr PosXY(Pt.x, Pt.y);
+			Pt2di PosUV = XY2UV(PosXY);
 
-            // Reprojection error
-            double reprojection_error = aResid.at(i);
+			// DEBUG
+			//std::cout << "Camera: " << mCams << "\n";
+			//std::cout << "Coordinates Pt3dr: " << "x = " << Pt.x << "; y = " << Pt.y << "; z = " << Pt.z << "\n";
+			//std::cout << "Coordinates Pt2dr: " << "Pt.x = " << Pt.x << "; Pt.y = " << Pt.y << "\n";
+			//std::cout << "Coordinates Pt2di: " << XY2UV(PosXY) << "\n";
 
-            // Print features
-            //std::cout << "Density = " << aVal << "\n";
-            //std::cout << "Multiplicity = " << multiplicity << "\n";
-            //std::cout << "Reprojection error " << aResid.at(i) << "\n";
+			// Density from density map
+			double density = mDM.GetR(PosUV);
 
-            string line = std::to_string(Pt.x) + " " + std::to_string(Pt.y) + " " + std::to_string(Pt.z) + " " + std::to_string(density) + " " + std::to_string(multiplicity) + " " + std::to_string(reprojection_error) + "\n"; // missing RGB and angles
+			// Multiplicity ?
+			int multiplicity = aCnf->NbIm();
 
-            std::cout << line;
+			// Reprojection error
+			double reprojection_error = aResid.at(i);
 
-            i++;
-        }
-    }
-    std::cout << "\n";
+			// Print features
+			//std::cout << "Density = " << aVal << "\n";
+			//std::cout << "Multiplicity = " << multiplicity << "\n";
+			//std::cout << "Reprojection error " << aResid.at(i) << "\n";
 
-    // PAUSE
-    // system("PAUSE");
+			string line = std::to_string(Pt.x) + " " + std::to_string(Pt.y) + " " + std::to_string(Pt.z) + " " + std::to_string(density) + " " + std::to_string(multiplicity) + " " + std::to_string(reprojection_error) + "\n"; // missing RGB and angles
+
+			std::cout << line;
+
+			i++;
+		}
+	}
+	std::cout << "\n";
+
+	// PAUSE
+	// system("PAUSE");
 }
 
 Pt2di cDensityMapPH::XY2UV(Pt2dr aVal){
@@ -233,6 +276,203 @@ int main_densityMapPH(int argc,char ** argv)
     return EXIT_SUCCESS;
 }
 
+/***
+Les méthodes devraient permettre de pouvoir calculer des angles à partir d'un point 3D et des positions
+des sommets de prises de vues.
+***/
+
+double sum(vector<double> vect) {
+	/***
+	* Description: Compute the sum of the elements of a vector
+	*
+	* Parameters:
+	*   - vect : vector
+	*
+	* Returns: Sum of the elements of the input vector
+	*
+	***/
+	double sum_of_elems;
+
+	std::for_each(vect.begin(), vect.end(), [&](double n) {
+		sum_of_elems += n;
+	});
+
+	return sum_of_elems;
+}
+
+vector<double> unitize(vector<double> vect)
+/***
+* Description: Compute a unitarized vector from an input vector
+*
+* Parameters:
+*   - vect : vector
+*
+* Returns: Unitarized input vector
+*
+***/
+{
+	double sum_of_elem = sum(vect);
+
+	if (sum_of_elem > 0) {
+		for (std::vector<double>::iterator it = vect.begin(); it != vect.end(); ++it) {
+			*it = *it / sum_of_elem;
+		}
+	}
+
+	return vect;
+}
+
+double dotProduct(vector<double> u, vector<double> v)
+/***
+* Description: Compute the scalar product between two vector
+*
+* Parameters:
+*   - u : vector
+*   - v : vector
+*
+* Returns: Scalar product between u and v
+*
+***/
+{
+	double dot = 0;
+	for (int i = 0; i < v.size(); i++) {
+		dot += u[i] * v[i];
+	}
+
+	return dot;
+}
+
+double length(vector<double> v)
+/***
+* Description: Calculates the norm of a vector
+*
+* Parameters:
+*   - v : vector
+*
+* Returns: The norm of the input vector
+*
+***/
+{
+	double norm = sqrt(dotProduct(v, v));
+
+	return norm;
+}
+
+double angle(vector<double> u, vector<double> v)
+/***
+* Description: Calculates the angle between two 3D vectors.
+*
+* Parameters:
+*   - u : vector
+*   - v : vector
+*
+* Returns: The computation needed for angle calculation before acos
+*          The angle returned is in radians.
+*
+***/
+{
+	double elem = dotProduct(u, v) / (length(u) * length(u));
+
+	return elem;
+}
+
+double vectorAngle(vector<double> v1, vector<double> v2)
+/***
+* Description: Calculates the angle between two 3D vectors.
+*
+* Parameters:
+*   - v0 : vector
+*   - v1 : vector
+*
+* Returns: The angle in radians.
+*
+***/
+{
+	// Unitize the input vectors
+	v1 = unitize(v1);
+	v2 = unitize(v2);
+
+	// (v1.v2)/(|v1|.|v2|)
+	double elem = angle(v1, v2);
+
+	// Force the dot product of the two input vectors to
+	// fall within the domain for inverse cosine, which
+	// is -1 <= x <= 1. This will prevent runtime
+	// "domain error" math exceptions.
+	elem = (elem < -1.0 ? -1.0 : (elem > 1.0 ? 1.0 : elem));
+
+	double angle = acos(elem);
+
+	return angle;
+}
+
+double maxInterAngle(int multiplicity, map<int, CamStenope *> mCams, cSetPMul1ConfigTPM *const aCnf, Pt3d<double> &Pt) {
+	/***
+	* Description:
+	*
+	* Parameters:
+	*   - multiplicity :
+	*   - mCams :
+	*   - aCnf :
+	*   - Pt :
+	*
+	* Returns:
+	*
+	***/
+	// Initialize vector list containing the directions from a 3D point to a camera camera center
+	vector<vector<double>> vectors;
+
+	for (int i = 0; i < multiplicity; i++) {
+		// get the optical center of the camera where the point is seen
+		Pt3dr camCenter = mCams[aCnf->VIdIm().at(i)]->VraiOpticalCenter();
+
+		double vx = Pt.x - camCenter.x;
+		double vy = Pt.y - camCenter.y;
+		double vz = Pt.z - camCenter.z;
+
+		vector<double> v;
+
+		v.push_back(vx);
+		v.push_back(vy);
+		v.push_back(vz);
+
+		vectors.push_back(v);
+	}
+
+	vector<double> angles;
+
+	int compt(0);
+
+	for (int indexA = 0; indexA < multiplicity; indexA++) {
+		for (int indexB = indexA; indexB < multiplicity; indexB++) {
+			if (indexA != indexB) {
+				angles.push_back(vectorAngle(vectors[indexA], vectors[indexB]));
+			}
+		}
+	}
+
+	vector<double>::iterator max = std::max_element(begin(angles), end(angles));
+
+	if (*max == 0) {
+		std::cout << "INIT DEBUG" << endl;
+		std::cout << "VECTORS" << endl;
+		for (int j = 0; j < multiplicity; j++) {
+			std::cout << vectors[j][0] << " " << vectors[j][1] << " " << vectors[j][2] << endl;
+		}
+		std::cout << "ANGLES" << endl;
+		for (int j = 0; j < multiplicity; j++) {
+			std::cout << angles[j] << endl;
+		}
+		std::cout << "CAMERA POSITION" << endl;
+		std::cout << mCams[aCnf->VIdIm().at(compt)]->VraiOpticalCenter() << endl;
+
+		std::cout << "END DEBUG" << endl;
+
+		std::cout << endl;
+	}
+
+	return *max;
+}
 
 cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
 {
@@ -242,6 +482,7 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
     mDir="./";
     mPrintTP_info=0;
     mSavePly=0;
+	mWithRadiometry=1;
 
     ElInitArgMain
             (
@@ -255,7 +496,8 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
 
                 << EAM(mOut,"Out",true, "Name of results" )
                 << EAM(mDebug,"Debug",true, "Print message in terminal to help debugging." )
-                << EAM(mPrintTP_info,"PrintTP",true, "Print tie point info in termila." )
+                << EAM(mPrintTP_info,"PrintTP",true, "Print tie point info in terminal." )
+				<< EAM(mWithRadiometry, "WithRadiometry", true, "Save the radiometric information")
                 << EAM(mSavePly, "SavePly", true, "Save the information as ply file.")
 
                 );
@@ -270,7 +512,9 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
         mTPM = new cSetTiePMul(0);
         mTPM->AddFile(mFileSH);
 
-        mTPM->Save("PMUl.txt");
+		// DEBUG
+		// Save the tie points to txt format
+        mTPM->Save("PMul.txt");
 
         // Now that we have 1) list of orientation file and 2) Tie point with New format, we recover the ID
         // of each images (used to manipulate tie points) and the name of each image)
@@ -300,7 +544,7 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
                 mCams[ImTPM->Id()]=CamOrientGenFromFile(aOri,mICNM);
                 // map container of image RGB indexed by the Id of image
                 mIms[ImTPM->Id()]=new cISR_ColorImg(NameIm);
-                std::string tmp(NameIm+"_col.tif");
+                std::string tmp("Tmp-MM-Dir/" + NameIm +"_col.tif");
                 mIms[ImTPM->Id()]->write(tmp);
             } else {
                 std::cout << "No tie points found for image " << NameIm << ".\n";
@@ -314,12 +558,15 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
         aFile.open(mDir + mOut);
 
         // write file header
-        aFile << "Config Point X Y Z mean_reprojection_error multiplicity UV id_image name_image\n";
+        aFile << "Config Point X Y Z R G B mean_reprojection_error multiplicity max_angle\n";
 
-        // if SavePly option is requested
-        if (mSavePly) {
-            std::cout << "SavePly option not handled yet: coming soon!\n";
-        }
+		/*
+		// if SavePly option is requested
+		if (mSavePly) {
+		string *aContentOfPlyFile = "";
+		int *countPoints = 0;
+		}
+		*/
 
         // loop on every config of TPM of the set of Tie Point Multiple
         int count_Cnf(0); // a counter for the number of tie point configuration in the set of TPM
@@ -331,35 +578,54 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
             // do 2 things; compute pseudo intersection of bundle for have 3D position of all tie point of the config and fill the "aResid" vector with mean reprojection error
             std::vector<Pt3dr> aPts=aCnf->IntersectBundle(mCams,aResid);
 
-            // Iterate on each point to have X Y Z Residual Reprojection_error information
+            // Iterate on each point to have "X Y Z R G B Residual Reprojection_error Max_inter_angle" information
             int i(0);
 
             for (auto & Pt: aPts){
 
-                // UNCOMMENT THIS PART TO HAVE RGB INFORMATION
+				// get multiplicity
+				int multiplicity = aCnf->NbIm();
 
-                // get the RGB information from UV coordinates
-
-
-                Pt2di image_coords(aCnf->Pt(i, aCnf->VIdIm().at(0)));
-                std::cout << "u = " << image_coords.x << " ; v = " << image_coords.y << "\n";
-                cISR_Color image_colors = mIms[aCnf->VIdIm().at(0)]->get(image_coords);
+				// get max_inter_angle
+				double max_inter_angle = maxInterAngle(multiplicity, mCams, aCnf, Pt);
 
                 // r(), g() and b() return u_int1 which are not properly display in terminal, so first a cast in int
+                // std::cout << "r = " << (int)image_colors.r() << " ; g = " << (int)image_colors.g() << " ; b = " << (int)image_colors.b() << "\n";
 
+                // Write the coordinates of point Pt in the output file
+				aFile << count_Cnf << " " << i << " " << Pt.x << " " << Pt.y << " " << Pt.z;
+				
+				if (mWithRadiometry) {
+					// get the RGB information from UV coordinates
+					Pt2di image_coords(aCnf->Pt(i, aCnf->VIdIm().at(0)));
+					cISR_Color image_colors = mIms[aCnf->VIdIm().at(0)]->get(image_coords);
 
+					// Write the colorimetric information for point Pt in the output file
+					aFile << " " << (int)image_colors.r() << " " << (int)image_colors.g() << " " << (int)image_colors.b();
+				}
 
-                std::cout << "r = " << (int)image_colors.r() << " ; g = " << (int)image_colors.g() << " ; b = " << (int)image_colors.b() << "\n";
+				// Write the features for the point Pt in the output file
+				aFile << " " << aResid.at(i) << " " << multiplicity << " " << max_inter_angle << endl;
 
-
-                // Write the features for the point Pt in the output file
-                aFile << count_Cnf << " " << i << " " << Pt.x << " " << Pt.y << " " << Pt.z << " " << aResid.at(i) << " " << aCnf->NbIm() << " " << aCnf->Pt(i, aCnf->VIdIm().at(0)) << " " << aCnf->VIdIm().at(0) << " " << mTPM->NameFromId(aCnf->VIdIm().at(0)) << "\n";
+				//std::cout << "UV = " << aCnf->Pt(i, aCnf->VIdIm().at(0)) << " ; Image = " << aCnf->VIdIm().at(0) << " ; Name_image = " << mTPM->NameFromId(aCnf->VIdIm().at(0)) << endl;
 
                 if (mPrintTP_info) {
                     std::cout << "Config " << count_Cnf << "Point " << i << "have XYZ position " << Pt << " and mean reprojection error of " << aResid.at(i) << " and multiplicity of " << aCnf->NbIm() << "\n";
 
                     std::cout << "Radiometry of this point may be extratcted from pixel position UV " << aCnf->Pt(i, aCnf->VIdIm().at(0)) << " of image " << aCnf->VIdIm().at(0) << " which name is " << mTPM->NameFromId(aCnf->VIdIm().at(0)) << "\n";
                 }
+
+				/*
+				if (mSavePly) {
+				// write in the ply file
+				aContentOfPlyFile = aContentOfPlyFile + Pt.x + " " + Pt.y + " " + Pt.z;
+				if (mWithRadiometry) {
+					aContentOfPlyFile = aContentOfPlyFile + (int)image_colors.r() + " " + (int)image_colors.g() + " " + (int)image_colors.b();
+				}
+				aContentOfPlyFile = aContentOfPlyFile + " " + aResid.at(i) + " " + aCnf->NbIm() << "\n";
+				countPoints++;
+				}
+				*/
 
                 i++;
             }
@@ -373,131 +639,36 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
         aFile.close();
         std::cout << mOut << " has been created sucessfully." << "\n";
 
+		/*
+		// if SavePly option is requested
+		if (mSavePly) {
+		// Print success
+		int pos = 0;
+		int n = (mOut.length() - 4);
+		// if SavePly option is requested
+		string aContentOfPlyFile = "";
+		// Create ply file
+		ofstream aPlyFile;
+		int pos = 0;
+		int n = (mOut.length() - 4);
+		aPlyFile.open(mDir + mOut.substr(pos, n) + ".ply");
+		// write ply header
+		aPlyFile << "ply\nformat ascii 1.0\n";
+		aPlyFile << "element vertex %i\n"; // /!\ MISSING THE NUMBER OF POINTS
+		aPlyFile << "property float x\n";
+		aPlyFile << "property float y\n";
+		aPlyFile << "property float z\n";
+		aPlyFile << "property uchar red\n";
+		aPlyFile << "property uchar green\n";
+		aPlyFile << "property uchar blue\n";
+		aPlyFile << "property float mean_reprojection_error\n";
+		aPlyFile << "property float multiplicity\n";
+		aPlyFile << "end_header\n";
+		aPlyFile.close();
+		std::cout << mOut.substr(pos, n) + ".ply" << " has been created sucessfully." << "\n";
+		}
+		*/
     }
-}
-
-
-/***
-J'ai ajouté des méthodes afin de pouvoir calculer des angles à partir d'un point 3D et des positions
-des sommets de prises de vues.
-Elles ne servent pas pour le moment, car je n'ai pas encore trouvé le moyen d'accéder à la position
-des sommets de prises de vues.
-***/
-
-double sum(vector<double> vect) {
-
-    double sum_of_elems;
-
-    std::for_each(vect.begin(), vect.end(), [&](double n) {
-        sum_of_elems += n;
-    });
-
-    return sum_of_elems;
-}
-
-vector<double> unitize(vector<double> vect)
-/***
-* Description: Calculates the angle between two 3D vectors.
-*
-* Parameters:
-*   - vect : vector
-*
-* Returns: Unitarized input vector
-*
-***/
-{
-    double sum_of_elem = sum(vect);
-
-    if (sum_of_elem > 0) {
-        for (std::vector<double>::iterator it = vect.begin(); it != vect.end(); ++it) {
-            *it = *it / sum_of_elem;
-        }
-    }
-
-    return vect;
-}
-
-double dotProduct(vector<double> u, vector<double> v)
-/***
-* Description: Calculates the angle between two 3D vectors.
-*
-* Parameters:
-*   - u : vector
-*   - v : vector
-*
-* Returns: The computation needed for angle calculation before acos
-*
-***/
-{
-    double dot = 0;
-    for (int i = 0; i < v.size(); i++) {
-        dot += u[i] * v[i];
-    }
-
-    return dot;
-}
-
-double length(vector<double> v)
-/***
-* Description: Calculates the norm of a vector
-*
-* Parameters:
-*   - v : vector
-*
-* Returns: The norm of the input vector
-*
-***/
-{
-    double norm = sqrt(dotProduct(v, v));
-
-    return norm;
-}
-
-double angle(vector<double> u, vector<double> v)
-/***
-* Description: Calculates the angle between two 3D vectors.
-*
-* Parameters:
-*   - u : vector
-*   - v : vector
-*
-* Returns: The computation needed for angle calculation before acos
-*
-***/
-{
-    double elem = dotProduct(u, v) / (length(u) * length(u));
-
-    return elem;
-}
-
-double VectorAngle(vector<double> v1, vector<double> v2)
-/***
-* Description: Calculates the angle between two 3D vectors.
-*
-* Parameters:
-*   - v0 : vector
-*   - v1 : vector
-*
-* Returns: The angle in radians.
-*
-***/
-{
-    // Unitize the input vectors
-    v1 = unitize(v1);
-    v2 = unitize(v2);
-
-    // (v1.v2)/(|v1|.|v2|)
-    double elem = angle(v1, v2);
-
-    // Force the dot product of the two input vectors to
-    // fall within the domain for inverse cosine, which
-    // is -1 <= x <= 1. This will prevent runtime
-    // "domain error" math exceptions.
-    elem = (elem < -1.0 ? -1.0 : (elem > 1.0 ? 1.0 : elem));
-
-    double angle = acos(elem);
-
-    return angle;
 }
 
 int main_manipulateNF_PH(int argc,char ** argv)
