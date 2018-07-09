@@ -1,6 +1,7 @@
 #ifndef CDENSITYMAPPH_H
 #define CDENSITYMAPPH_H
 #include "StdAfx.h"
+#include <numeric>
 #include "../../uti_phgrm/TiepTri/MultTieP.h"
 #include "../imagesimpleprojection.h"
 
@@ -55,10 +56,8 @@ public:
 private:
 
     cInterfChantierNameManipulateur * mICNM;
-    bool mDebug;
-    bool mSavePly;
-    bool mPrintTP_info;
-	bool mWithRadiometry;
+    bool mDebug, mSavePly, mPrintTP_info, mWithRadiometry;
+	double mFactElimTieP;
     std::string mDir,mOriPat,mOut,mFileSH;
     std::list<std::string> mOriFL;// xml Orientation File List
     cSetTiePMul * mTPM;

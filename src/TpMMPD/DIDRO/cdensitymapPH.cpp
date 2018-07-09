@@ -1,5 +1,4 @@
 #include "cdensitymapPH.h"
-#include <numeric>
 
 // create a map of the entire area with very low resolution that depict the density of tie point (point homologue PH)
 // or also Multiplicity of tie point map or Residual map
@@ -409,15 +408,15 @@ double vectorAngle(vector<double> v1, vector<double> v2)
 
 double maxInterAngle(int multiplicity, map<int, CamStenope *> mCams, cSetPMul1ConfigTPM *const aCnf, Pt3d<double> &Pt) {
 	/***
-	* Description:
+	* Description: Compute the maximum angle of intersection of two bundles for a 3D point.
 	*
 	* Parameters:
-	*   - multiplicity :
-	*   - mCams :
-	*   - aCnf :
-	*   - Pt :
+	*   - multiplicity : the numbers of images where a 3D point is seen in
+	*   - mCams : map of the cameras of the scene
+	*   - aCnf : a configuration of the tie point set
+	*   - Pt : a 3D point
 	*
-	* Returns:
+	* Returns: maximum angle of intersection of two bundles for a 3D point
 	*
 	***/
 	// Initialize vector list containing the directions from a 3D point to a camera camera center
@@ -442,18 +441,24 @@ double maxInterAngle(int multiplicity, map<int, CamStenope *> mCams, cSetPMul1Co
 
 	vector<double> angles;
 
-	int compt(0);
+	// For debug purposes
+	int a(0);
+	int b(0);
 
 	for (int indexA = 0; indexA < multiplicity; indexA++) {
 		for (int indexB = indexA; indexB < multiplicity; indexB++) {
 			if (indexA != indexB) {
 				angles.push_back(vectorAngle(vectors[indexA], vectors[indexB]));
+				// For debug purposes
+				int a = indexA;
+				int b = indexB;
 			}
 		}
 	}
 
 	vector<double>::iterator max = std::max_element(begin(angles), end(angles));
 
+	/*
 	if (*max == 0) {
 		std::cout << "INIT DEBUG" << endl;
 		std::cout << "VECTORS" << endl;
@@ -465,12 +470,14 @@ double maxInterAngle(int multiplicity, map<int, CamStenope *> mCams, cSetPMul1Co
 			std::cout << angles[j] << endl;
 		}
 		std::cout << "CAMERA POSITION" << endl;
-		std::cout << mCams[aCnf->VIdIm().at(compt)]->VraiOpticalCenter() << endl;
+		std::cout << mCams[aCnf->VIdIm().at(a)]->VraiOpticalCenter() << endl;
+		std::cout << mCams[aCnf->VIdIm().at(a)]->VraiOpticalCenter() << endl;
 
 		std::cout << "END DEBUG" << endl;
 
 		std::cout << endl;
 	}
+	*/
 
 	return *max;
 }
@@ -484,22 +491,23 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
     mPrintTP_info=0;
     mSavePly=0;
 	mWithRadiometry=1;
+	mFactElimTieP=5.0;
 
     ElInitArgMain
             (
                 argc,argv,
-                LArgMain()   << EAMC(mDir,"Working Directory", eSAM_IsDir)
+                LArgMain()
+				<< EAMC(mDir,"Working Directory", eSAM_IsDir)
                 << EAMC(mOriPat,"Orientation (xml) list of file, ex 'Ori-Rel/Orientation.*.xml'", eSAM_IsPatFile)
                 << EAMC(mFileSH,"File of new set of homol format.", eSAM_IsExistFile )
                 ,
                 LArgMain()
-
-
-                << EAM(mOut,"Out",true, "Name of results" )
-                << EAM(mDebug,"Debug",true, "Print message in terminal to help debugging." )
-                << EAM(mPrintTP_info,"PrintTP",true, "Print tie point info in terminal." )
-				<< EAM(mWithRadiometry, "WithRadiometry", true, "Save the radiometric information")
-                << EAM(mSavePly, "SavePly", true, "Save the information as ply file.")
+                << EAM(mOut,"Out",true, "Name of results. (default = pointsWithFeatures.txt)" )
+                << EAM(mDebug,"Debug",true, "Print message in terminal to help debugging. (default = false)" )
+                << EAM(mPrintTP_info,"PrintTP",true, "Print tie point info in terminal. (default = false)" )
+				<< EAM(mWithRadiometry, "WithRadiometry", true, "Save the radiometric information. (default = true)")
+				<< EAM(mFactElimTieP, "FactElimTieP", true, "Elim Factor for tie point. (default = 5.0)")
+                << EAM(mSavePly, "SavePly", true, "Save the information as ply file. (default = false)")
 
                 );
 
@@ -529,6 +537,9 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
 
         std::cout << "List of orientation files:\n";
 
+		// Set n if ply ply writing is needed
+		int n = (mOut.length() - 4);
+
         for (auto &aOri : mOriFL){
 
             std::cout << aOri << "\n";
@@ -540,11 +551,12 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
 
             // retrieve IdIm
             cCelImTPM * ImTPM=mTPM->CelFromName(NameIm);
+
             if (ImTPM) {
                 // map container of Camera is indexed by the Id of Image (cSetTiePMul)
                 mCams[ImTPM->Id()]=CamOrientGenFromFile(aOri,mICNM);
                 // map container of image RGB indexed by the Id of image
-                mIms[ImTPM->Id()]=new cISR_ColorImg(NameIm);
+                mIms[ImTPM->Id()]= new cISR_ColorImg(NameIm);
                 std::string tmp("Tmp-MM-Dir/" + NameIm +"_col.tif");
                 mIms[ImTPM->Id()]->write(tmp);
             } else {
@@ -561,23 +573,58 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
         // write file header
         aFile << "Config Point X Y Z R G B mean_reprojection_error multiplicity max_angle\n";
 
-		/*
 		// if SavePly option is requested
 		if (mSavePly) {
-		string *aContentOfPlyFile = "";
-		int *countPoints = 0;
+			int aNbPts = 0;
+			for (auto & aCnf : mTPM->VPMul())
+			{
+				aNbPts += aCnf->NbPts();
+			}
+
+			// Create ply file
+			ofstream aPlyFile;
+			aPlyFile.open(mDir + mOut.substr(0, n) + ".ply");
+			// write ply header
+			aPlyFile << "ply\nformat ascii 1.0\n";
+			aPlyFile << "element vertex ";
+			aPlyFile << aNbPts;
+			aPlyFile << "\n";
+			aPlyFile << "property float x\n";
+			aPlyFile << "property float y\n";
+			aPlyFile << "property float z\n";
+			aPlyFile << "property uint config\n";
+			aPlyFile << "property uint pt_nb_in_config\n";
+			if (mWithRadiometry) {
+				aPlyFile << "property uchar red\n";
+				aPlyFile << "property uchar green\n";
+				aPlyFile << "property uchar blue\n";
+			}
+			aPlyFile << "property float mean_reprojection_error\n";
+			aPlyFile << "property float multiplicity\n";
+			aPlyFile << "property float max_angle\n";
+			aPlyFile << "end_header\n";
+			aPlyFile.close();
 		}
-		*/
 
         // loop on every config of TPM of the set of Tie Point Multiple
         int count_Cnf(0); // a counter for the number of tie point configuration in the set of TPM
         for (auto & aCnf : mTPM->VPMul())
         {
-
             // initialize a vector that will contains all the mean reprojection error for all tie point
             std::vector<double> aResid;
-            // do 2 things; compute pseudo intersection of bundle for have 3D position of all tie point of the config and fill the "aResid" vector with mean reprojection error
+            // do 2 things; compute pseudo intersection of bundle to have 3D position of all tie point of the config
+			// and fill the "aResid" vector with mean reprojection error
             std::vector<Pt3dr> aPts=aCnf->IntersectBundle(mCams,aResid);
+
+			/*
+			// (dev) Try to understand why residuals are so high
+			std::cout << "\n";
+			for (auto j = aResid.begin(); j != aResid.end(); j++) {
+				std::cout << *j << ' ';
+			}
+			std::cout << "\n";
+			std::cout << "\n";
+			*/
 
             // Iterate on each point to have "X Y Z R G B Residual Reprojection_error Max_inter_angle" information
             int i(0);
@@ -587,24 +634,49 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
 				// get multiplicity
 				int multiplicity = aCnf->NbIm();
 
+				// (dev) Work in progress...
+				/*
+				if (multiplicity > 2) {
+					for (int i = 0; i < multiplicity, i++) {
+						double currentResid = aResid.at(i);
+						if (currentResid > 5) {
+							mCams
+						}
+					}
+				}
+				else {
+					break;
+				}
+				*/
+
 				// get max_inter_angle
 				double max_inter_angle = maxInterAngle(multiplicity, mCams, aCnf, Pt);
 
-                // r(), g() and b() return u_int1 which are not properly display in terminal, so first a cast in int
-                // std::cout << "r = " << (int)image_colors.r() << " ; g = " << (int)image_colors.g() << " ; b = " << (int)image_colors.b() << "\n";
-
                 // Write the coordinates of point Pt in the output file
 				aFile << count_Cnf << " " << i << " " << Pt.x << " " << Pt.y << " " << Pt.z;
+
+				// if SavePly option is requested
+				if (mSavePly) {
+					// open ply file
+					ofstream aPlyFile;
+					aPlyFile.open(mDir + mOut.substr(0, n) + ".ply", ios::out | ios::app);
+					// write information on point
+					aPlyFile << Pt.x << " " << Pt.y << " " << Pt.z << " " << count_Cnf << " " << i;
+					aPlyFile.close();
+				}
 				
 				if (mWithRadiometry) {
 					// initialize average color vectors
 					vector<int> averageRed, averageGreen, averageBlue;
 
 					// iterate on the images where the point can be seen
-					for (int i = 0; i < multiplicity; i++) {
+					for (int pos = 0; pos < multiplicity; pos++) {
 						// get the RGB information from UV coordinates
-						Pt2di image_coords(aCnf->Pt(i, aCnf->VIdIm().at(i)));
-						cISR_Color image_colors = mIms[aCnf->VIdIm().at(i)]->get(image_coords);
+						Pt2di image_coords(aCnf->Pt(i, aCnf->VIdIm().at(pos)));
+						cISR_Color image_colors = mIms[aCnf->VIdIm().at(pos)]->get(image_coords);
+
+						// r(), g() and b() return u_int1 which are not properly display in terminal, so first a cast in int
+						// std::cout << "r = " << (int)image_colors.r() << " ; g = " << (int)image_colors.g() << " ; b = " << (int)image_colors.b() << "\n";
 
 						averageRed.push_back((int)image_colors.r());
 						averageGreen.push_back((int)image_colors.g());
@@ -618,10 +690,29 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
 
 					// Write the colorimetric information for point Pt in the output file
 					aFile << " " << aRed << " " << aGreen << " " << aBlue;
+
+					// if SavePly option is requested
+					if (mSavePly) {
+						// open ply file
+						ofstream aPlyFile;
+						aPlyFile.open(mDir + mOut.substr(0, n) + ".ply", ios::out | ios::app);
+						// write information on point
+						aPlyFile << " " << aRed << " " << aGreen << " " << aBlue;
+					}
 				}
 
 				// Write the features for the point Pt in the output file
 				aFile << " " << aResid.at(i) << " " << multiplicity << " " << max_inter_angle << endl;
+
+				// if SavePly option is requested
+				if (mSavePly) {
+					// open ply file
+					ofstream aPlyFile;
+					aPlyFile.open(mDir + mOut.substr(0, n) + ".ply", ios::out | ios::app);
+					// write information on point
+					aPlyFile << " " << aResid.at(i) << " " << multiplicity << " " << max_inter_angle << endl;
+					aPlyFile.close();
+				}
 
 				//std::cout << "UV = " << aCnf->Pt(i, aCnf->VIdIm().at(0)) << " ; Image = " << aCnf->VIdIm().at(0) << " ; Name_image = " << mTPM->NameFromId(aCnf->VIdIm().at(0)) << endl;
 
@@ -633,13 +724,15 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
 
 				/*
 				if (mSavePly) {
-				// write in the ply file
-				aContentOfPlyFile = aContentOfPlyFile + Pt.x + " " + Pt.y + " " + Pt.z;
-				if (mWithRadiometry) {
-					aContentOfPlyFile = aContentOfPlyFile + (int)image_colors.r() + " " + (int)image_colors.g() + " " + (int)image_colors.b();
-				}
-				aContentOfPlyFile = aContentOfPlyFile + " " + aResid.at(i) + " " + aCnf->NbIm() << "\n";
-				countPoints++;
+					
+					int pos = 0;
+					int n = (mOut.length() - 4);
+					// if SavePly option is requested
+					// Create ply file
+					ofstream aPlyFile;
+					aPlyFile.open(mDir + mOut.substr(pos, n) + ".ply");
+					// write information on point
+					
 				}
 				*/
 
@@ -653,37 +746,14 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
 
         // Close the output file
         aFile.close();
+		// print sucess
         std::cout << mOut << " has been created sucessfully." << "\n";
-
-		/*
+		
 		// if SavePly option is requested
 		if (mSavePly) {
-		// Print success
-		int pos = 0;
-		int n = (mOut.length() - 4);
-		// if SavePly option is requested
-		string aContentOfPlyFile = "";
-		// Create ply file
-		ofstream aPlyFile;
-		int pos = 0;
-		int n = (mOut.length() - 4);
-		aPlyFile.open(mDir + mOut.substr(pos, n) + ".ply");
-		// write ply header
-		aPlyFile << "ply\nformat ascii 1.0\n";
-		aPlyFile << "element vertex %i\n"; // /!\ MISSING THE NUMBER OF POINTS
-		aPlyFile << "property float x\n";
-		aPlyFile << "property float y\n";
-		aPlyFile << "property float z\n";
-		aPlyFile << "property uchar red\n";
-		aPlyFile << "property uchar green\n";
-		aPlyFile << "property uchar blue\n";
-		aPlyFile << "property float mean_reprojection_error\n";
-		aPlyFile << "property float multiplicity\n";
-		aPlyFile << "end_header\n";
-		aPlyFile.close();
-		std::cout << mOut.substr(pos, n) + ".ply" << " has been created sucessfully." << "\n";
+			// print sucess
+			std::cout << mOut.substr(0, n) + ".ply" << " has been created sucessfully." << "\n";
 		}
-		*/
     }
 }
 
