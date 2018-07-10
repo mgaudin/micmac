@@ -537,9 +537,6 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
 
         std::cout << "List of orientation files:\n";
 
-		// Set n if ply ply writing is needed
-		int n = (mOut.length() - 4);
-
         for (auto &aOri : mOriFL){
 
             std::cout << aOri << "\n";
@@ -570,6 +567,15 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
         ofstream aFile;
         aFile.open(mDir + mOut);
 
+		// create ply file
+		ofstream aPlyFile;
+		if (mSavePly) {
+			// set n if ply ply writing is needed
+			int n = (mOut.length() - 4);
+			// open ply file
+			aPlyFile.open(mDir + mOut.substr(0, n) + ".ply", ios::out | ios::app);
+		}
+
         // write file header
         aFile << "Config Point X Y Z R G B mean_reprojection_error multiplicity max_angle\n";
 
@@ -580,10 +586,6 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
 			{
 				aNbPts += aCnf->NbPts();
 			}
-
-			// Create ply file
-			ofstream aPlyFile;
-			aPlyFile.open(mDir + mOut.substr(0, n) + ".ply");
 			// write ply header
 			aPlyFile << "ply\nformat ascii 1.0\n";
 			aPlyFile << "element vertex ";
@@ -603,7 +605,6 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
 			aPlyFile << "property float multiplicity\n";
 			aPlyFile << "property float max_angle\n";
 			aPlyFile << "end_header\n";
-			aPlyFile.close();
 		}
 
         // loop on every config of TPM of the set of Tie Point Multiple
@@ -657,12 +658,8 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
 
 				// if SavePly option is requested
 				if (mSavePly) {
-					// open ply file
-					ofstream aPlyFile;
-					aPlyFile.open(mDir + mOut.substr(0, n) + ".ply", ios::out | ios::app);
 					// write information on point
 					aPlyFile << Pt.x << " " << Pt.y << " " << Pt.z << " " << count_Cnf << " " << i;
-					aPlyFile.close();
 				}
 				
 				if (mWithRadiometry) {
@@ -693,9 +690,6 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
 
 					// if SavePly option is requested
 					if (mSavePly) {
-						// open ply file
-						ofstream aPlyFile;
-						aPlyFile.open(mDir + mOut.substr(0, n) + ".ply", ios::out | ios::app);
 						// write information on point
 						aPlyFile << " " << aRed << " " << aGreen << " " << aBlue;
 					}
@@ -706,12 +700,8 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
 
 				// if SavePly option is requested
 				if (mSavePly) {
-					// open ply file
-					ofstream aPlyFile;
-					aPlyFile.open(mDir + mOut.substr(0, n) + ".ply", ios::out | ios::app);
 					// write information on point
 					aPlyFile << " " << aResid.at(i) << " " << multiplicity << " " << max_inter_angle << endl;
-					aPlyFile.close();
 				}
 
 				//std::cout << "UV = " << aCnf->Pt(i, aCnf->VIdIm().at(0)) << " ; Image = " << aCnf->VIdIm().at(0) << " ; Name_image = " << mTPM->NameFromId(aCnf->VIdIm().at(0)) << endl;
@@ -751,6 +741,8 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
 		
 		// if SavePly option is requested
 		if (mSavePly) {
+			// set n if ply ply writing is needed
+			int n = (mOut.length() - 4);
 			// print sucess
 			std::cout << mOut.substr(0, n) + ".ply" << " has been created sucessfully." << "\n";
 		}
