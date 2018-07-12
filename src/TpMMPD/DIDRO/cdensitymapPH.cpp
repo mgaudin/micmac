@@ -403,7 +403,11 @@ double vectorAngle(vector<double> v1, vector<double> v2)
 
 	double angle = acos(elem);
 
-	return angle;
+	// put the angle value in degrees
+	double rad2deg = M_PI / 180.0;
+	double angle_deg = angle * rad2deg;
+
+	return angle_deg;
 }
 
 double maxInterAngle(int multiplicity, map<int, CamStenope *> mCams, cSetPMul1ConfigTPM *const aCnf, Pt3d<double> &Pt) {
@@ -458,7 +462,6 @@ double maxInterAngle(int multiplicity, map<int, CamStenope *> mCams, cSetPMul1Co
 
 	vector<double>::iterator max = std::max_element(begin(angles), end(angles));
 
-	/*
 	if (*max == 0) {
 		std::cout << "INIT DEBUG" << endl;
 		std::cout << "VECTORS" << endl;
@@ -477,7 +480,6 @@ double maxInterAngle(int multiplicity, map<int, CamStenope *> mCams, cSetPMul1Co
 
 		std::cout << endl;
 	}
-	*/
 
 	return *max;
 }
@@ -635,21 +637,6 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
 				// get multiplicity
 				int multiplicity = aCnf->NbIm();
 
-				// (dev) Work in progress...
-				/*
-				if (multiplicity > 2) {
-					for (int i = 0; i < multiplicity, i++) {
-						double currentResid = aResid.at(i);
-						if (currentResid > 5) {
-							mCams
-						}
-					}
-				}
-				else {
-					break;
-				}
-				*/
-
 				// get max_inter_angle
 				double max_inter_angle = maxInterAngle(multiplicity, mCams, aCnf, Pt);
 
@@ -711,20 +698,6 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
 
                     std::cout << "Radiometry of this point may be extratcted from pixel position UV " << aCnf->Pt(i, aCnf->VIdIm().at(0)) << " of image " << aCnf->VIdIm().at(0) << " which name is " << mTPM->NameFromId(aCnf->VIdIm().at(0)) << "\n";
                 }
-
-				/*
-				if (mSavePly) {
-					
-					int pos = 0;
-					int n = (mOut.length() - 4);
-					// if SavePly option is requested
-					// Create ply file
-					ofstream aPlyFile;
-					aPlyFile.open(mDir + mOut.substr(pos, n) + ".ply");
-					// write information on point
-					
-				}
-				*/
 
                 i++;
             }

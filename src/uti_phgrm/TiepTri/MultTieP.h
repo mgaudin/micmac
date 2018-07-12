@@ -112,7 +112,7 @@ class cSetPMul1ConfigTPM
 
        Pt2dr GetPtByImgId(int aKp, int aQueryImgID);
        std::vector<Pt3d<double> > IntersectBundle(std::map<int, CamStenope *> aMCams); //aMCams are Camera indexed by the Id fo Image
-       std::vector<Pt3d<double> > IntersectBundle(std::map<int, CamStenope *> aMCams, std::vector<double> & aVResid); // return reproj error in aVResod
+       std::vector<Pt3d<double> > IntersectBundle(std::map<int, CamStenope *> aMCams, std::vector<double> & aVResid); // return reproj error in aVResid
 
     private :
        int  AddrPtIm(int aKp,int aKIm) {return 2*(aKp*mNbIm  +aKIm) ;}
