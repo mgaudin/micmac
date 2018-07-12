@@ -24,8 +24,15 @@ private:
     void initDensityMap(); // initialise density map
     void loadPH(); // load Tie point 2D
     void populateDensityMap(); // compute 3D position for each TP and modify
+<<<<<<< HEAD
 	void populateDensityMap4Tests(); // Test purposes
 	Pt2di XY2UV(Pt2dr aVal);
+||||||| merged common ancestors
+    Pt2di XY2UV(Pt2dr aVal);
+=======
+    void populateDensityMap4Tests(); // Test purposes
+    Pt2di XY2UV(Pt2dr aVal);
+>>>>>>> 22ab121401cb42bebdcef7611681bc18c7175068
 
     cInterfChantierNameManipulateur * mICNM;
 
@@ -56,8 +63,19 @@ public:
 private:
 
     cInterfChantierNameManipulateur * mICNM;
+<<<<<<< HEAD
     bool mDebug, mSavePly, mPrintTP_info, mWithRadiometry;
 	double mFactElimTieP;
+||||||| merged common ancestors
+    bool mDebug;
+    bool mSavePly;
+    bool mPrintTP_info;
+=======
+    bool mDebug;
+    bool mSavePly;
+    bool mPrintTP_info;
+    bool mWithRadiometry;
+>>>>>>> 22ab121401cb42bebdcef7611681bc18c7175068
     std::string mDir,mOriPat,mOut,mFileSH;
     std::list<std::string> mOriFL;// xml Orientation File List
     cSetTiePMul * mTPM;

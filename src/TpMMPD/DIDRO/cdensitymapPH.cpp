@@ -153,6 +153,7 @@ void cDensityMapPH::determineGSD(){
 
 void cDensityMapPH::populateDensityMap() {
 
+<<<<<<< HEAD
 	// loop on every config of TPM of the set of TPM
 	int progBar = ElMax(int(mTPM->VPMul().size() / 10), 1);
 	int cnt(0);
@@ -198,12 +199,40 @@ void cDensityMapPH::populateDensityMap4Tests() {
 	// Header
 	string header = "x y z density multiplicity reprojection_error max_angle// missing RGB";
 	std::cout << header << "\n";
+||||||| merged common ancestors
+    // PAUSE
+    //system("PAUSE");
+
+    // Loop on every config of TPM of the set of TPM
+    for (auto & aCnf : mTPM->VPMul()) {
+=======
+    // PAUSE
+    //system("PAUSE");
+    bool test(1);
+    // Loop on every config of TPM of the set of TPM
+    for (auto & aCnf : mTPM->VPMul()) {
+>>>>>>> 22ab121401cb42bebdcef7611681bc18c7175068
 
 	// PAUSE
 	//system("PAUSE");
 
+<<<<<<< HEAD
 	// Loop on every config of TPM of the set of TPM
 	for (auto & aCnf : mTPM->VPMul()) {
+||||||| merged common ancestors
+        // Id of the point
+        int i(0);
+=======
+        double maxRes=*max_element(aResid.begin(),aResid.end());
+        if (maxRes>10) {
+
+            std::cout << " resid vector : " << aResid << "\n";
+            test=0;
+        }
+
+        // Id of the point
+        int i(0);
+>>>>>>> 22ab121401cb42bebdcef7611681bc18c7175068
 
 		// Initialize residual vector
 		std::vector<double> aResid;

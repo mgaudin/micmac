@@ -487,7 +487,7 @@ const std::vector<cMMCom> & getAvailableCommands()
 		aRes.push_back(cMMCom("AlphaGet27", AlphaGet27_main, " Tool for relative positioning of objects on images"));
 		aRes.push_back(cMMCom("MergeSOMAF", mergeSOMAF_main, " Tool for merging SetOfMesureAppuisFlottants XMLs"));
 
-#if (ELISE_QT_VERSION >= 4)
+#if ELISE_QT
 		aRes.push_back(cMMCom("SaisieAppuisInitQT", SaisieAppuisInitQT_main, " Interactive tool for initial capture of GCP"));
 		aRes.push_back(cMMCom("SaisieAppuisPredicQT", SaisieAppuisPredicQT_main, " Interactive tool for assisted capture of GCP"));
 		aRes.push_back(cMMCom("SaisieBascQT", SaisieBascQT_main, " Interactive tool to capture information on the scene"));
@@ -535,7 +535,7 @@ const std::vector<cMMCom> & getAvailableCommands()
 
 		aRes.push_back(cMMCom("DIV", Devideo_main, "Videos development (require ffmpeg)"));
 		aRes.push_back(cMMCom("Liquor", Liquor_main, "Orientation specialized for linear acquisition"));
-		aRes.push_back(cMMCom("Luxor", Luxor_main, "Orientation specialized for linear acquisition using a sliding window"));
+		aRes.push_back(cMMCom("Luxor", Luxor_main, "Orientation specialized for linear acquisition using a sliding window",cArgLogCom(2)));
 		aRes.push_back(cMMCom("Morito", Morito_main, "Merge set of Orientations with common values"));
 		aRes.push_back(cMMCom("Donuts", Donuts_main, "Cyl to Torus (Donuts like)"));
 		aRes.push_back(cMMCom("C3DC", C3DC_main, "Automatic Matching from Culture 3D Cloud project"));
@@ -660,6 +660,7 @@ extern int  Tapioca_IDR_main(int argc, char ** argv);
 extern int  resizeImg_main(int argc, char ** argv);
 extern int  resizeHomol_main(int argc, char ** argv);
 extern int  VarioCamTo8Bits_main(int argc, char ** argv);
+extern int  main_Txt2CplImageTime(int argc, char ** argv);
 // test de jo
 extern int  main_test(int argc,char ** argv);
 extern int  main_test2(int argc,char ** argv);
@@ -1008,11 +1009,7 @@ const std::vector<cMMCom> & TestLibAvailableCommands()
         aRes.push_back(cMMCom("SeamlineFeatheringBox",main_featheringOrthoBox,"Perform mosaiking of orthos with a feathering around the seamline for one tile of the mosaic"));
         aRes.push_back(cMMCom("GCP2DMeasureConvert",GCP2DMeasureConvert_main,"Export or import 2D image marks of GCPs/Manual tie point"));
         aRes.push_back(cMMCom("DensityMapHomol",main_densityMapPH,"Compute a Density map of tie point"));
-
-
-// #if (ELISE_QT_VERSION >= 4)
         aRes.push_back(cMMCom("Masq3Dto2D",Masq3Dto2D_main,"Create a 2D Masq from Nuage and 3D Masq "));
-// #endif
         aRes.push_back(cMMCom("MergeCloud",CPP_AppliMergeCloud,"Tool for merging overlapping depth maps from different view points"));
         aRes.push_back(cMMCom("MMEnvlop",MMEnveloppe_Main,"Compute initial envelope surface for MMEpi "));
         aRes.push_back(cMMCom("PlySphere",PlySphere_main,"Tool to generate a sphere of point, ply format, tuning"));
@@ -1113,6 +1110,8 @@ const std::vector<cMMCom> & TestLibAvailableCommands()
         aRes.push_back(cMMCom("IntersectHomol",IntersectHomol_main ,"Pseudo-intersection for tie points"));
         aRes.push_back(cMMCom("ReechMAF",ReechMAF_main ,"Apply map to image measurement file"));
         aRes.push_back(cMMCom("ImgTMTxt2Xml",ImgTMTxt2Xml_main ,"Match tops time with image time to get GPS time"));
+        aRes.push_back(cMMCom("ImgTMTxt2Xml_B",main_Txt2CplImageTime ,"Convert txt file containing camlight image name and GPS week and time into micmac format"));
+
         aRes.push_back(cMMCom("MoyMAF",MoyMAF_main ,"Calculate center of 4 corner points"));
         aRes.push_back(cMMCom("GenImgTM",GenImgTM_main ,"Generate fake Img name/time couple from GPS .xml file"));
         aRes.push_back(cMMCom("EsSim",EsSim_main ,"EsSim"));
@@ -1288,7 +1287,7 @@ int GenMain(int argc, char ** argv, const std::vector<cMMCom> & aVComs)
 
 	if ((argc >= 2) && (argv[1][0] == 'v') && (argv[1] != std::string("vic")))
 	{
-		ELISE_ASSERT(ELISE_QT_VERSION > 0, std::string("Qt not installed, " + std::string(argv[1]) + " not available").c_str());
+		ELISE_ASSERT(ELISE_QT > 0, std::string("Qt not installed, " + std::string(argv[1]) + " not available").c_str());
 
 		std::string cmds[] = { std::string("vMICMAC"), std::string("vApero"), std::string("vAnn"), std::string("vCalibFinale"),
 			std::string("vCalibInit"), std::string("vMergeDepthMap"), std::string("vPastis"),
@@ -1313,7 +1312,7 @@ int GenMain(int argc, char ** argv, const std::vector<cMMCom> & aVComs)
 	// bool aValInit_TheExitOnBrkp=TheExitOnBrkp;
 	// TheExitOnBrkp=true;
 	MMD_InitArgcArgv(argc, argv);
-#if(ELISE_QT_VERSION >= 4)
+#if ELISE_QT
 	initQtLibraryPath();
 #endif
 	// TheExitOnBrkp=true;
