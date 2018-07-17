@@ -986,7 +986,7 @@ const std::vector<cMMCom> & TestLibAvailableCommands()
 	   aRes.push_back(cMMCom("OriFromOnePose",GenOriFromOnePose_main,"Generate an Ori-XXX from one pos ; All images the same"));
        aRes.push_back(cMMCom("Xml2Dmp",Xml2Dmp_main,"Convert XML to Dump"));
        aRes.push_back(cMMCom("Dmp2Xml",Dmp2Xml_main,"Convert Dump to Xml"));
-	   aRes.push_back(cMMCom("GenRayon3D",GenRayon3D_main,"Generate 3D lines in a ply format ; Visualize pseudo-intersection"));
+	aRes.push_back(cMMCom("GenRayon3D",GenRayon3D_main,"Generate 3D lines in a ply format ; Visualize pseudo-intersection"));
         aRes.push_back(cMMCom("AddAffinity", AddAffinity_main, "Add an affinity, tuning"));
         aRes.push_back(cMMCom("TP2GCP",ServiceGeoSud_TP2GCP_main,"Tie Points to Ground Control Points (for GeoSud services)"));
         aRes.push_back(cMMCom("Ortho",ServiceGeoSud_Ortho_main,"Compute a basic Ortho from a DTM and a satellite image (for GeoSud services)"));
@@ -996,9 +996,8 @@ const std::vector<cMMCom> & TestLibAvailableCommands()
         aRes.push_back(cMMCom("ThermicTo8Bits",ThermicTo8Bits_main,"Convert 16 bits tif thermic images (from variocam or optris camera) to 8 bits gray or RGB images"));
         aRes.push_back(cMMCom("jo_FFH",FilterFileHom_main,"filtrer un fichier de paire d'image"));
         aRes.push_back(cMMCom("jo_T2V",T2V_main,"appliquer une homographie a un ensemble d'im thermique pour Reg avec images visibles"));
-        aRes.push_back(cMMCom("jo_test",main_test,"test function for didro project"));
-		aRes.push_back(cMMCom("jo_test2", main_test2, "test function for didro project"));
-		aRes.push_back(cMMCom("jo_test3", main_OneLionPaw, "test function"));
+	aRes.push_back(cMMCom("jo_test", main_test2, "test function for didro project"));
+	aRes.push_back(cMMCom("jo_test2", main_OneLionPaw, "test function"));
         aRes.push_back(cMMCom("ExportFeatures",main_manipulateNF_PH,"Export a tie point report with advanced features"));
         aRes.push_back(cMMCom("GCP2Hom",GCP2Hom_main,"Convert GCP 2D measures in homol file"));
         aRes.push_back(cMMCom("TapiocaIDR",Tapioca_IDR_main,"Utiliser Tapioca avec des Images de Résolution Différente (effectue un resample des images)"));
@@ -1018,14 +1017,14 @@ const std::vector<cMMCom> & TestLibAvailableCommands()
         aRes.push_back(cMMCom("PlySphere",PlySphere_main,"Tool to generate a sphere of point, ply format, tuning"));
         aRes.push_back(cMMCom("PlyGCP",PlyGCP_main,"Tool to generate a visualization of ply"));
         aRes.push_back(cMMCom("San2Ply",San2Ply_main,"Generate a Ply visualisation of an Analytical Surface"));
-	    aRes.push_back(cMMCom("RedImg",RedImgsByN_main,"Reduce Number of images : 1 out of N"));
+	aRes.push_back(cMMCom("RedImg",RedImgsByN_main,"Reduce Number of images : 1 out of N"));
         aRes.push_back(cMMCom("CASALL",CASALL_main,"Compute Analytic Surface Automatically  low level"));
         aRes.push_back(cMMCom("CalcAutoCorrel",CalcAutoCorrel_main,"Compute and Store Auto Correlation (if not already done)"));
-		aRes.push_back(cMMCom("OptAeroProc",OptAeroProc_main,"Optimize Aero Processing Datatset"));
+	aRes.push_back(cMMCom("OptAeroProc",OptAeroProc_main,"Optimize Aero Processing Datatset"));
         aRes.push_back(cMMCom("CLIC",CCL_main,"Cam Light Imag Correc)"));
         aRes.push_back(cMMCom("MMEnvStatute",MMEnvStatute_main,"Envelope for mode statue"));
         aRes.push_back(cMMCom("TopoBasc",TopoSurf_main,"Topological analysis before bascule"));
-		aRes.push_back(cMMCom("ArboArch",ArboArch_main,"Files organization, internal use"));
+	aRes.push_back(cMMCom("ArboArch",ArboArch_main,"Files organization, internal use"));
 
         aRes.push_back(cMMCom("Check1Hom",CheckOneHom_main,"Check One File Homologue"));
         aRes.push_back(cMMCom("CheckAllHom",CheckAllHom_main,"Check All File Homologue"));

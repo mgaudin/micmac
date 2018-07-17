@@ -399,7 +399,7 @@ double vectorAngle(vector<double> v1, vector<double> v2)
 	double angle = acos(elem);
 
 	// put the angle value in degrees
-	double rad2deg = M_PI / 180.0;
+	double rad2deg = 180.0 / M_PI;
 	double angle_deg = angle * rad2deg;
 
 	return angle_deg;
