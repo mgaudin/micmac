@@ -379,7 +379,7 @@ double vectorAngle(vector<double> v1, vector<double> v2)
 *   - v0 : vector
 *   - v1 : vector
 *
-* Returns: The angle in radians.
+* Returns: The angle in degrees.
 *
 ***/
 {
@@ -399,7 +399,7 @@ double vectorAngle(vector<double> v1, vector<double> v2)
 	double angle = acos(elem);
 
 	// put the angle value in degrees
-	double rad2deg = M_PI / 180.0;
+	double rad2deg = 180.0 / M_PI;
 	double angle_deg = angle * rad2deg;
 
 	return angle_deg;
@@ -461,15 +461,15 @@ double maxInterAngle(int multiplicity, map<int, CamStenope *> mCams, cSetPMul1Co
 		std::cout << "INIT DEBUG" << endl;
 		std::cout << "VECTORS" << endl;
 		for (int j = 0; j < multiplicity; j++) {
-			std::cout << vectors[j][0] << " " << vectors[j][1] << " " << vectors[j][2] << endl;
+			std::cout << "vector n°" << j << " : " << vectors[j][0] << " " << vectors[j][1] << " " << vectors[j][2] << endl;
 		}
 		std::cout << "ANGLES" << endl;
 		for (int j = 0; j < multiplicity; j++) {
-			std::cout << angles[j] << endl;
+			std::cout << "angle n°" << j << "angles[j] << endl;
 		}
 		std::cout << "CAMERA POSITION" << endl;
 		std::cout << mCams[aCnf->VIdIm().at(a)]->VraiOpticalCenter() << endl;
-		std::cout << mCams[aCnf->VIdIm().at(a)]->VraiOpticalCenter() << endl;
+		std::cout << mCams[aCnf->VIdIm().at(b)]->VraiOpticalCenter() << endl;
 
 		std::cout << "END DEBUG" << endl;
 
@@ -613,16 +613,6 @@ cManipulate_NF_TP::cManipulate_NF_TP(int argc,char ** argv)
             // do 2 things; compute pseudo intersection of bundle to have 3D position of all tie point of the config
 			// and fill the "aResid" vector with mean reprojection error
             std::vector<Pt3dr> aPts=aCnf->IntersectBundle(mCams,aResid);
-
-			/*
-			// (dev) Try to understand why residuals are so high
-			std::cout << "\n";
-			for (auto j = aResid.begin(); j != aResid.end(); j++) {
-				std::cout << *j << ' ';
-			}
-			std::cout << "\n";
-			std::cout << "\n";
-			*/
 
             // Iterate on each point to have "X Y Z R G B Residual Reprojection_error Max_inter_angle" information
             int i(0);
